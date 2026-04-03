@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IPL Fantasy Points Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --gold: #F5A623;
+    --gold-dark: #C47F0A;
+    --blue: #1A2B5E;
+    --blue-mid: #243680;
+    --blue-light: #2E4CA8;
+    --red: #E63946;
+    --green: #2DC653;
+    --bg: #0D1535;
+    --surface: #131E45;
+    --surface2: #1A2755;
+    --border: rgba(245,166,35,0.18);
+    --text: #F0F4FF;
+    --muted: #8899CC;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 80% 40% at 50% -10%, rgba(36,54,128,0.55) 0%, transparent 70%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(245,166,35,0.04) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(245,166,35,0.04) 40px);
+  }
+
+  header {
+    text-align: center;
+    padding: 48px 20px 32px;
+    position: relative;
+  }
+
+  .trophy {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 10px;
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 7vw, 72px);
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #F5A623 0%, #FFD97D 50%, #F5A623 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  /* Points Guide */
+  .points-guide {
+    max-width: 780px;
+    margin: 0 auto 36px;
+    padding: 0 16px;
+  }
+
+  .guide-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 14px;
+  }
+
+  .guide-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  @media (max-width: 600px) {
+    .guide-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .guide-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .guide-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .guide-icon { font-size: 22px; margin-bottom: 6px; }
+  .guide-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+  .guide-pts { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--gold); }
+
+  .guide-input-row {
+    display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px;
+  }
+
+  .guide-input-row label { font-size: 11px; color: var(--muted); }
+
+  .pts-input {
+    width: 58px;
+    background: var(--bg);
+    border: 1px solid rgba(245,166,35,0.3);
+    border-radius: 6px;
+    color: var(--gold);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    text-align: center;
+    padding: 4px 6px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .pts-input:focus { border-color: var(--gold); }
+
+  /* Main Grid */
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 16px 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 700px) {
+    .main { grid-template-columns: 1fr; }
+  }
+
+  /* Team Card */
+  .team-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .team-header {
+    padding: 18px 22px 14px;
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-light));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .team-name-wrap { flex: 1; }
+
+  .team-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  .team-name-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 2px;
+    width: 100%;
+    outline: none;
+    padding: 0 0 2px;
+    transition: border-color 0.2s;
+  }
+
+  .team-name-input:focus { border-bottom-color: var(--gold); }
+
+  .team-total-badge {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 8px 14px;
+    text-align: center;
+    min-width: 72px;
+  }
+
+  .ttb-label { font-size: 9px; color: rgba(255,255,255,0.5); letter-spacing: 1px; text-transform: uppercase; }
+  .ttb-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--gold);
+    line-height: 1.1;
+    transition: color 0.3s;
+  }
+
+  /* Player Table */
+  .player-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .player-table thead tr {
+    background: var(--surface2);
+  }
+
+  .player-table th {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 12px;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .player-table th:first-child { text-align: left; }
+
+  .player-table tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.15s;
+  }
+
+  .player-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+  .player-table tbody tr:last-child { border-bottom: none; }
+
+  .player-table td {
+    padding: 10px 12px;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .player-table td:first-child { text-align: left; }
+
+  .player-num {
+    display: inline-flex;
+    width: 22px; height: 22px;
+    align-items: center; justify-content: center;
+    background: var(--blue-light);
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 8px;
+    flex-shrink: 0;
+    color: rgba(255,255,255,0.7);
+  }
+
+  .player-name-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid transparent;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    width: 110px;
+    outline: none;
+    padding: 2px 0;
+    transition: border-color 0.2s;
+  }
+
+  .player-name-input:focus { border-bottom-color: var(--gold); }
+
+  .stat-input {
+    width: 52px;
+    background: var(--bg);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    padding: 5px 6px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .stat-input:focus { border-color: var(--gold); background: rgba(245,166,35,0.07); }
+
+  .player-pts {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--gold);
+    min-width: 36px;
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+
+  .player-pts.bump { animation: bump 0.3s ease; }
+  @keyframes bump { 0% { transform: scale(1); } 50% { transform: scale(1.3); color: #FFD97D; } 100% { transform: scale(1); } }
+
+  .remove-btn {
+    background: none; border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+  }
+
+  .remove-btn:hover { color: var(--red); background: rgba(230,57,70,0.12); }
+
+  .captain-btn {
+    background: none; border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    color: var(--muted);
+    transition: color 0.2s, background 0.2s, transform 0.2s;
+    line-height: 1;
+  }
+
+  .captain-btn:hover { color: var(--gold); background: rgba(245,166,35,0.1); }
+
+  .captain-btn.active {
+    color: var(--gold);
+    background: rgba(245,166,35,0.15);
+    animation: crownPop 0.35s ease;
+  }
+
+  @keyframes crownPop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.5) rotate(-8deg); }
+    70% { transform: scale(0.9) rotate(4deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  .captain-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    background: rgba(245,166,35,0.2);
+    color: var(--gold);
+    border: 1px solid rgba(245,166,35,0.4);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  .bonus-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    background: rgba(45,198,83,0.15);
+    color: #2DC653;
+    border: 1px solid rgba(45,198,83,0.35);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-left: 4px;
+    vertical-align: middle;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+
+  tr.is-captain { background: rgba(245,166,35,0.05) !important; }
+  tr.is-captain td:first-child { border-left: 2px solid var(--gold); }
+
+  /* Add Player Button */
+  .add-player-btn {
+    width: 100%;
+    padding: 13px;
+    background: transparent;
+    border: 1px dashed rgba(245,166,35,0.3);
+    color: var(--gold);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.2s, border-color 0.2s;
+    border-radius: 0 0 20px 20px;
+  }
+
+  .add-player-btn:hover { background: rgba(245,166,35,0.07); border-color: var(--gold); }
+
+  /* Scoreboard */
+  .scoreboard {
+    max-width: 1100px;
+    margin: 0 auto 32px;
+    padding: 0 16px;
+  }
+
+  .score-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 20px;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(36,54,128,0.2) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .score-team {
+    text-align: center;
+    min-width: 160px;
+  }
+
+  .score-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 6px;
+  }
+
+  .score-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px;
+    line-height: 1;
+    color: var(--gold);
+    transition: color 0.4s;
+  }
+
+  .score-val.leader { color: #2DC653; }
+  .score-val.trailer { color: var(--muted); }
+
+  .vs-divider {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--muted);
+    letter-spacing: 3px;
+  }
+
+  .winner-banner {
+    text-align: center;
+    margin-top: 16px;
+  }
+
+  .winner-label {
+    display: inline-block;
+    padding: 8px 24px;
+    border-radius: 999px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    color: #000;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+
+  .winner-label.show { opacity: 1; transform: translateY(0); }
+
+  /* Reset Button */
+  .controls {
+    text-align: center;
+    margin: 0 auto 20px;
+  }
+
+  .reset-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 9px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+
+  .reset-btn:hover { border-color: var(--red); color: var(--red); background: rgba(230,57,70,0.07); }
+
+  /* Toggle switch */
+  .toggle-wrap {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-top: 14px;
+  }
+  .toggle-label { font-size: 13px; color: var(--muted); letter-spacing: 0.5px; transition: color 0.3s; }
+  .toggle-label.on { color: #2DC653; font-weight: 500; }
+
+  .toggle {
+    position: relative; width: 44px; height: 24px; cursor: pointer;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    position: absolute; inset: 0;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 999px;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .toggle input:checked ~ .toggle-track {
+    background: rgba(45,198,83,0.25);
+    border-color: rgba(45,198,83,0.6);
+  }
+  .toggle-thumb {
+    position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--muted);
+    transition: transform 0.25s, background 0.25s;
+  }
+  .toggle input:checked ~ .toggle-track .toggle-thumb {
+    transform: translateX(20px);
+    background: #2DC653;
+  }
+
+  .bonus-section { transition: opacity 0.3s; }
+  .bonus-section.disabled { opacity: 0.35; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="trophy">🏆</span>
+  <h1>IPL Points Calculator</h1>
+  <p class="subtitle">Fantasy Cricket Scoring System</p>
+</header>
+
+<!-- Points Guide -->
+<div class="points-guide">
+  <div class="guide-title">⚡ Points System</div>
+  <div class="guide-grid">
+    <div class="guide-card">
+      <div class="guide-icon">🏏</div>
+      <div class="guide-label">Per Run</div>
+      <div class="guide-pts" id="display-run-pts">1</div>
+      <div class="guide-input-row">
+        <label>pts/run</label>
+        <input class="pts-input" type="number" id="run-pts" value="1" min="0" step="0.5" />
+      </div>
+    </div>
+    <div class="guide-card">
+      <div class="guide-icon">🤲</div>
+      <div class="guide-label">Per Catch</div>
+      <div class="guide-pts" id="display-catch-pts">10</div>
+      <div class="guide-input-row">
+        <label>pts/catch</label>
+        <input class="pts-input" type="number" id="catch-pts" value="10" min="0" step="1" />
+      </div>
+    </div>
+    <div class="guide-card">
+      <div class="guide-icon">🎯</div>
+      <div class="guide-label">Per Wicket</div>
+      <div class="guide-pts" id="display-wicket-pts">20</div>
+      <div class="guide-input-row">
+        <label>pts/wicket</label>
+        <input class="pts-input" type="number" id="wicket-pts" value="20" min="0" step="1" />
+      </div>
+    </div>
+    <div class="guide-card" style="border-color: rgba(245,166,35,0.45);">
+      <div class="guide-icon">👑</div>
+      <div class="guide-label">Captain Bonus</div>
+      <div class="guide-pts">2×</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">Points doubled<br>one per team</div>
+    </div>
+  </div>
+  <div class="toggle-wrap">
+    <span class="toggle-label" id="bonus-toggle-label">Milestone Bonus</span>
+    <label class="toggle">
+      <input type="checkbox" id="bonus-toggle" checked onchange="toggleBonus(this.checked)" />
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+    </label>
+    <span class="toggle-label on" id="bonus-toggle-state">ON</span>
+  </div>
+  <div class="bonus-section" id="bonus-section" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+    <div class="guide-card" style="border-color:rgba(45,198,83,0.4);">
+      <div class="guide-icon">🏏</div>
+      <div class="guide-label">50+ Runs Bonus</div>
+      <div class="guide-pts" style="color:#2DC653;" id="display-bonus-pts">25</div>
+      <div class="guide-input-row">
+        <label>bonus pts</label>
+        <input class="pts-input" type="number" id="bonus-pts" value="25" min="0" step="5" style="border-color:rgba(45,198,83,0.4);color:#2DC653;" />
+      </div>
+    </div>
+    <div class="guide-card" style="border-color:rgba(45,198,83,0.4);">
+      <div class="guide-icon">🎯</div>
+      <div class="guide-label">3-Wicket Bonus</div>
+      <div class="guide-pts" style="color:#2DC653;" id="display-bonus-pts-wkt">25</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;">Same as 50+ runs<br>auto-applied</div>
+    </div>
+  </div>
+</div>
+
+<!-- Scoreboard -->
+<div class="scoreboard">
+  <div class="score-wrap">
+    <div class="score-team">
+      <div class="score-name" id="sb-t1-name">TEAM 1</div>
+      <div class="score-val" id="sb-t1-val">0</div>
+    </div>
+    <div>
+      <div class="vs-divider">VS</div>
+      <div class="winner-banner"><span class="winner-label" id="winner-label">🏆 TEAM 1 WINS!</span></div>
+    </div>
+    <div class="score-team">
+      <div class="score-name" id="sb-t2-name">TEAM 2</div>
+      <div class="score-val" id="sb-t2-val">0</div>
+    </div>
+  </div>
+</div>
+
+<!-- Teams -->
+<div class="main">
+  <div class="team-card" id="team1-card">
+    <div class="team-header">
+      <div class="team-name-wrap">
+        <div class="team-label">Team 1</div>
+        <input class="team-name-input" type="text" id="t1-name" value="Team 1" maxlength="20" />
+      </div>
+      <div class="team-total-badge">
+        <div class="ttb-label">Total Pts</div>
+        <div class="ttb-val" id="t1-total">0</div>
+      </div>
+    </div>
+    <table class="player-table">
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Runs</th>
+          <th>Catch</th>
+          <th>Wkts</th>
+          <th>Pts</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="t1-body"></tbody>
+    </table>
+    <button class="add-player-btn" onclick="addPlayer(1)">+ Add Player</button>
+  </div>
+
+  <div class="team-card" id="team2-card">
+    <div class="team-header">
+      <div class="team-name-wrap">
+        <div class="team-label">Team 2</div>
+        <input class="team-name-input" type="text" id="t2-name" value="Team 2" maxlength="20" />
+      </div>
+      <div class="team-total-badge">
+        <div class="ttb-label">Total Pts</div>
+        <div class="ttb-val" id="t2-total">0</div>
+      </div>
+    </div>
+    <table class="player-table">
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Runs</th>
+          <th>Catch</th>
+          <th>Wkts</th>
+          <th>Pts</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="t2-body"></tbody>
+    </table>
+    <button class="add-player-btn" onclick="addPlayer(2)">+ Add Player</button>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="reset-btn" onclick="resetAll()">↺ Reset All Data</button>
+</div>
+
+<script>
+const initialData = {
+  team1: {
+    name: "Team 1",
+    players: [
+      { name: "KL", runs: 0, catch: 0, wickets: 0 },
+      { name: "Markram", runs: 0, catch: 0, wickets: 0 },
+      { name: "Pooran", runs: 0, catch: 0, wickets: 0 },
+      { name: "Mukesh", runs: 0, catch: 0, wickets: 0 },
+      { name: "Nitish", runs: 0, catch: 0, wickets: 0 },
+      { name: "Ngidi", runs: 0, catch: 0, wickets: 0 }
+    ]
+  },
+  team2: {
+    name: "Team 2",
+    players: [
+      { name: "Marsh", runs: 0, catch: 0, wickets: 0 },
+      { name: "Nissanka", runs: 0, catch: 0, wickets: 0 },
+      { name: "Pant", runs: 0, catch: 0, wickets: 0 },
+      { name: "Axar", runs: 0, catch: 0, wickets: 0 },
+      { name: "Shami", runs: 0, catch: 0, wickets: 0 },
+      { name: "Nattu", runs: 0, catch: 0, wickets: 0 }
+    ]
+  }
+};
+
+let ptsRun = 1, ptsCatch = 10, ptsWicket = 20, ptsBonus = 25, bonusEnabled = true;
+
+function toggleBonus(enabled) {
+  bonusEnabled = enabled;
+  const stateEl = document.getElementById('bonus-toggle-state');
+  const labelEl = document.getElementById('bonus-toggle-label');
+  const section = document.getElementById('bonus-section');
+  stateEl.textContent = enabled ? 'ON' : 'OFF';
+  stateEl.className = enabled ? 'toggle-label on' : 'toggle-label';
+  section.classList.toggle('disabled', !enabled);
+  recalcAll();
+}
+
+function getPoints(runs, catches, wickets, isCaptain) {
+  const r = parseFloat(runs)||0, c = parseFloat(catches)||0, w = parseFloat(wickets)||0;
+  const bonus = bonusEnabled ? ((r >= 50 ? ptsBonus : 0) + (w >= 3 ? ptsBonus : 0)) : 0;
+  const base = r*ptsRun + c*ptsCatch + w*ptsWicket + bonus;
+  return isCaptain ? base * 2 : base;
+}
+
+function renderPlayers(team, players) {
+  const tbody = document.getElementById(`t${team}-body`);
+  tbody.innerHTML = '';
+  players.forEach((p, i) => {
+    const isCap = i === 0;
+    const r = parseFloat(p.runs)||0, w = parseFloat(p.wickets)||0;
+    const pts = getPoints(p.runs, p.catch, p.wickets, isCap);
+    const bonusBadges = bonusEnabled
+      ? ((r >= 50 ? '<span class="bonus-badge">🏏 50+ bonus</span>' : '') +
+         (w >= 3  ? '<span class="bonus-badge">🎯 3-wkt bonus</span>' : ''))
+      : '';
+    const tr = document.createElement('tr');
+    if (isCap) tr.classList.add('is-captain');
+    tr.innerHTML = `
+      <td>
+        <span class="player-num">${isCap ? '👑' : i+1}</span>
+        <input class="player-name-input" type="text" value="${p.name}" maxlength="18"
+          onchange="updatePlayer(${team},${i},'name',this.value)" />${isCap ? '<span class="captain-badge">C</span>' : ''}${bonusBadges}
+      </td>
+      <td><input class="stat-input" type="number" value="${p.runs||''}" placeholder="0" min="0"
+        onchange="updatePlayer(${team},${i},'runs',this.value)"
+        oninput="updatePlayer(${team},${i},'runs',this.value)" /></td>
+      <td><input class="stat-input" type="number" value="${p.catch||''}" placeholder="0" min="0"
+        onchange="updatePlayer(${team},${i},'catch',this.value)"
+        oninput="updatePlayer(${team},${i},'catch',this.value)" /></td>
+      <td><input class="stat-input" type="number" value="${p.wickets||''}" placeholder="0" min="0"
+        onchange="updatePlayer(${team},${i},'wickets',this.value)"
+        oninput="updatePlayer(${team},${i},'wickets',this.value)" /></td>
+      <td><span class="player-pts" id="pts-t${team}-${i}">${pts}</span></td>
+      <td>${isCap ? '<span class="captain-btn active" title="Captain — points doubled">👑</span>' : ''}</td>
+      <td><button class="remove-btn" onclick="removePlayer(${team},${i})" title="Remove">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updatePlayer(team, idx, field, val) {
+  const data = team === 1 ? state.team1 : state.team2;
+  data.players[idx][field] = field === 'name' ? val : (parseFloat(val) || 0);
+  recalcTeam(team);
+}
+
+function recalcTeam(team) {
+  const data = team === 1 ? state.team1 : state.team2;
+  let total = 0;
+  data.players.forEach((p, i) => {
+    const isCap = i === 0;
+    const pts = getPoints(p.runs, p.catch, p.wickets, isCap);
+    total += pts;
+    const el = document.getElementById(`pts-t${team}-${i}`);
+    if (el) {
+      if (el.textContent != pts) {
+        el.textContent = pts;
+        el.classList.remove('bump');
+        void el.offsetWidth;
+        el.classList.add('bump');
+      }
+    }
+  });
+  document.getElementById(`t${team}-total`).textContent = total;
+  updateScoreboard();
+}
+
+function recalcAll() {
+  renderPlayers(1, state.team1.players);
+  renderPlayers(2, state.team2.players);
+  recalcTeam(1);
+  recalcTeam(2);
+}
+
+function updateScoreboard() {
+  const t1 = parseInt(document.getElementById('t1-total').textContent) || 0;
+  const t2 = parseInt(document.getElementById('t2-total').textContent) || 0;
+  const n1 = state.team1.name;
+  const n2 = state.team2.name;
+
+  document.getElementById('sb-t1-name').textContent = n1.toUpperCase();
+  document.getElementById('sb-t2-name').textContent = n2.toUpperCase();
+  document.getElementById('sb-t1-val').textContent = t1;
+  document.getElementById('sb-t2-val').textContent = t2;
+
+  const v1 = document.getElementById('sb-t1-val');
+  const v2 = document.getElementById('sb-t2-val');
+  const wl = document.getElementById('winner-label');
+
+  v1.className = 'score-val';
+  v2.className = 'score-val';
+
+  if (t1 > t2) {
+    v1.classList.add('leader');
+    v2.classList.add('trailer');
+    wl.textContent = `🏆 ${n1} WINS!`;
+    wl.classList.add('show');
+  } else if (t2 > t1) {
+    v2.classList.add('leader');
+    v1.classList.add('trailer');
+    wl.textContent = `🏆 ${n2} WINS!`;
+    wl.classList.add('show');
+  } else {
+    wl.textContent = '🤝 IT\'S A TIE!';
+    if (t1 > 0) wl.classList.add('show');
+    else wl.classList.remove('show');
+  }
+}
+
+function addPlayer(team) {
+  const data = team === 1 ? state.team1 : state.team2;
+  data.players.push({ name: `Player ${data.players.length + 1}`, runs: 0, catch: 0, wickets: 0 });
+  renderPlayers(team, data.players);
+  recalcTeam(team);
+}
+
+function removePlayer(team, idx) {
+  const data = team === 1 ? state.team1 : state.team2;
+  if (data.players.length <= 1) return;
+  if (idx === 0) return; // Captain (first player) cannot be removed
+  data.players.splice(idx, 1);
+  renderPlayers(team, data.players);
+  recalcTeam(team);
+}
+
+function resetAll() {
+  if (!confirm('Reset all data? All stats will be cleared to zero.')) return;
+  state = JSON.parse(JSON.stringify(initialData));
+  document.getElementById('t1-name').value = state.team1.name;
+  document.getElementById('t2-name').value = state.team2.name;
+  recalcAll();
+}
+
+// Points system inputs
+document.getElementById('run-pts').addEventListener('input', function() {
+  ptsRun = parseFloat(this.value) || 0;
+  document.getElementById('display-run-pts').textContent = ptsRun;
+  recalcAll();
+});
+document.getElementById('catch-pts').addEventListener('input', function() {
+  ptsCatch = parseFloat(this.value) || 0;
+  document.getElementById('display-catch-pts').textContent = ptsCatch;
+  recalcAll();
+});
+document.getElementById('wicket-pts').addEventListener('input', function() {
+  ptsWicket = parseFloat(this.value) || 0;
+  document.getElementById('display-wicket-pts').textContent = ptsWicket;
+  recalcAll();
+});
+document.getElementById('bonus-pts').addEventListener('input', function() {
+  ptsBonus = parseFloat(this.value) || 0;
+  document.getElementById('display-bonus-pts').textContent = ptsBonus;
+  document.getElementById('display-bonus-pts-wkt').textContent = ptsBonus;
+  recalcAll();
+});
+
+document.getElementById('t1-name').addEventListener('input', function() {
+  state.team1.name = this.value || 'Team 1';
+  updateScoreboard();
+});
+document.getElementById('t2-name').addEventListener('input', function() {
+  state.team2.name = this.value || 'Team 2';
+  updateScoreboard();
+});
+
+// Init
+let state = JSON.parse(JSON.stringify(initialData));
+recalcAll();
+</script>
+</body>
+</html>
